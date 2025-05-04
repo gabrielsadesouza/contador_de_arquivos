@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Contador de Arquivos</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cabin:ital,wght@0,400..700;1,400..700&family=Genos:ital,wght@0,100..900;1,100..900&family=Manrope:wght@700&family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap" rel="stylesheet">
+
+<style>
+    body {
+    font-family: Arial, sans-serif;
+    text-align: center;
+    margin-top: 50px;
+    }
+    img {
+    width: 250px;
+    }
+    h1 {
+        margin: 20px 0;
+        font-family: 'Manrope', sans-serif;
+        font-weight: 700;
+    }
+    #message {
+    margin-top: 20px;
+    font-weight: bold;
+    }
+    input, button {
+    margin: 10px;
+    padding: 10px;
+    width: 60%;
+    }
+    #reiniciar {
+    display: none;
+    margin-top: 20px;
+    }
+
+    /* Estilo atualizado para o botão Baixar */
+    button {
+    background-color: #6c757d;
+    color: white;
+    font-size: 18px;
+    font-family: 'Manrope', sans-serif;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    width: auto;
+    }
+
+    button:hover {
+      background-color: #5a6268;   /* cor mais escura ao passar o mouse */
+    }
+
+    #reiniciar {
+    display: none;
+    }
+</style>
+</head>
+<body>
+<img src="assets/logo1.png" alt="Logo">
+<h1>CONTADOR DE ARQUIVOS</h1>
+
+<input id="folder-path" type="text" placeholder="Digite o caminho da pasta" />
+<br>
+<button onclick="analisar()">BAIXAR</button>
+
+<div id="message"></div>
+<button id="reiniciar" onclick="reiniciar()">Voltar ao Início</button>
+
+<script>
+    async function analisar() {
+    const path = document.getElementById('folder-path').value;
+    const message = document.getElementById('message');
+
+    if (!path) {
+        message.innerText = "Digite um caminho válido.";
+        message.style.color = "red";
+        return;
+    }
+
+    const result = await window.pywebview.api.analisar(path);
+
+    if (result.status === 'success') {
+        const filePath = result.file;
+        const ler = await window.pywebview.api.ler_relatorio(filePath);
+
+        if (ler.status !== 'success') {
+        message.innerText = "Erro ao ler o relatório.";
+        message.style.color = "red";
+        return;
+        }
+
+        const pickerOpts = {
+        suggestedName: "relatorio.xlsx",
+        types: [{
+            description: 'Planilha Excel',
+            accept: { 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'] }
+        }]
+        };
+
+        try {
+        const handle = await window.showSaveFilePicker(pickerOpts);
+        const writable = await handle.createWritable();
+        const blob = new Blob([
+            Uint8Array.from(ler.data.match(/.{1,2}/g).map(byte => parseInt(byte, 16)))
+        ]);
+        await writable.write(blob);
+        await writable.close();
+
+        message.innerText = "Relatório baixado com sucesso!";
+        message.style.color = "green";
+        document.getElementById('reiniciar').style.display = 'inline-block';
+        } catch (err) {
+        message.innerText = "Download cancelado ou falhou.";
+        message.style.color = "red";
+        }
+    } else {
+        message.innerText = "Erro: " + result.message;
+        message.style.color = "red";
+    }
+    }
+
+    function reiniciar() {
+    document.getElementById('folder-path').value = "";
+    document.getElementById('message').innerText = "";
+    document.getElementById('reiniciar').style.display = "none";
+    }
+</script>
+</body>
+</html>
