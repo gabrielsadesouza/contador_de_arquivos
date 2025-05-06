@@ -1,4 +1,4 @@
-('C:\\Users\\gabri\\OneDrive\\Área de Trabalho\\Contador de '
+('C:\\Users\\gabri\\OneDrive\\Documents\\NOV\\Contador de '
  'Arquivos\\build\\contador\\PYZ-00.pyz',
  [('__future__',
    'C:\\Users\\gabri\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\__future__.py',

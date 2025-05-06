@@ -3,8 +3,7 @@ import tempfile
 from datetime import datetime
 from collections import Counter
 
-import pandas as pd
-import webview
+import webview  # Mantido fora: precisa na criação da janela
 
 class API:
     def get_file_type(self, extension):
@@ -22,6 +21,9 @@ class API:
 
     def analisar(self, path):
         try:
+            # Importações pesadas só quando necessário (acelera inicialização do .exe)
+            import pandas as pd
+
             counter = Counter()
             subdir_stats = Counter()
             main_dir_stats = Counter()
@@ -43,27 +45,28 @@ class API:
                     subdir_stats[rel_path] += 1
                     main_dir_stats[main_dir] += 1
                     file_details.append({
-                    "Arquivo": file,
-                    "Caminho": os.path.join(root, file),
-                    "Extensão": ext,
-                    "Tipo": tipo
-                })
+                        "Arquivo": file,
+                        "Caminho": os.path.join(root, file),
+                        "Extensão": ext,
+                        "Tipo": tipo
+                    })
 
             dfs = {
-                'Resumo por Tipo': pd.DataFrame(
-                    [{"Extensão": ext, "Tipo": tipo, "Quantidade": qtd}
-                    for (ext, tipo), qtd in sorted(counter.items())]
-                ),
-                'Subpastas Detalhadas': pd.DataFrame(
-                    [{"Subpasta": sub, "Arquivos": qtd}
-                    for sub, qtd in sorted(subdir_stats.items())]
-                ),
-                'Total por Pasta': pd.DataFrame(
-                    [{"Pasta": main, "Arquivos": qtd}
-                    for main, qtd in sorted(main_dir_stats.items())]
-                ),
-                'Detalhes dos Arquivos': pd.DataFrame(file_details)
-            }
+    'Total por Pasta': pd.DataFrame(
+        [{"Pasta": main, "Arquivos": qtd}
+        for main, qtd in sorted(main_dir_stats.items())]
+    ),
+    'Subpastas Detalhadas': pd.DataFrame(
+        [{"Subpasta": sub, "Arquivos": qtd}
+        for sub, qtd in sorted(subdir_stats.items())]
+    ),
+    'Detalhes dos Arquivos': pd.DataFrame(file_details),
+    'Resumo por Tipo': pd.DataFrame(
+        [{"Extensão": ext, "Tipo": tipo, "Quantidade": qtd}
+        for (ext, tipo), qtd in sorted(counter.items())]
+    )
+}
+
 
             report_name = f"relatorio_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
             temp_path = os.path.join(tempfile.gettempdir(), report_name)
